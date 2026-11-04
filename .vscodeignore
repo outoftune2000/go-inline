@@ -11,3 +11,9 @@ package-lock.json
 *.vsix
 *.zip
 **/*.map
+.git/**
+.local-model.json
+.env
+.env.*
+work/**
+coverage/**

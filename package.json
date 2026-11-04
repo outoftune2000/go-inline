@@ -4,7 +4,7 @@
   "description": "Local-first AI inline completion for Go, alongside gopls.",
   "version": "0.3.0",
   "publisher": "go-inline-local",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -164,5 +164,13 @@
     "esbuild": "^0.25.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/outoftune2000/go-inline.git"
+  },
+  "homepage": "https://github.com/outoftune2000/go-inline#readme",
+  "bugs": {
+    "url": "https://github.com/outoftune2000/go-inline/issues"
   }
 }
