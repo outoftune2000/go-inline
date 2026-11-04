@@ -1,0 +1,168 @@
+{
+  "name": "go-inline",
+  "displayName": "Go Inline",
+  "description": "Local-first AI inline completion for Go, alongside gopls.",
+  "version": "0.3.0",
+  "publisher": "go-inline-local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Machine Learning"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onLanguage:go"
+  ],
+  "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": false
+  },
+  "scripts": {
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "test": "npm run build && tsx --test test/*.test.ts",
+    "test:host": "npm run build && tsc -p test/host/tsconfig.json && node scripts/test-host.mjs",
+    "fixtures:check": "tsx scripts/evaluate.ts --reference",
+    "evaluate": "tsx scripts/evaluate.ts",
+    "package": "npm run build && vsce package --no-dependencies",
+    "vscode:prepublish": "npm run build"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "goInline.toggle",
+        "title": "Go Inline: Enable / Disable Completion"
+      },
+      {
+        "command": "goInline.selectProvider",
+        "title": "Go Inline: Choose Provider"
+      },
+      {
+        "command": "goInline.setApiKey",
+        "title": "Go Inline: Set Zen API Key"
+      },
+      {
+        "command": "goInline.checkConnection",
+        "title": "Go Inline: Check Connection"
+      },
+      {
+        "command": "goInline.completeLong",
+        "title": "Go Inline: Suggest Longer Continuation"
+      },
+      {
+        "title": "Go Inline: Set OpenRouter API Key",
+        "command": "goInline.setOpenRouterApiKey"
+      }
+    ],
+    "configuration": {
+      "title": "Go Inline",
+      "properties": {
+        "goInline.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Go inline suggestions."
+        },
+        "goInline.provider": {
+          "type": "string",
+          "enum": [
+            "llamacpp",
+            "zen",
+            "openrouter"
+          ],
+          "default": "llamacpp",
+          "scope": "application",
+          "description": "Choose local or explicitly selected hosted inference. No automatic fallback."
+        },
+        "goInline.zen.endpoint": {
+          "type": "string",
+          "default": "https://opencode.ai/zen/v1",
+          "scope": "application",
+          "description": "HTTPS OpenCode-compatible Chat Completions base URL."
+        },
+        "goInline.zen.model": {
+          "type": "string",
+          "default": "",
+          "description": "An account-permitted Chat Completions model ID. Required for Zen."
+        },
+        "goInline.debounceMs": {
+          "type": "integer",
+          "default": 350,
+          "minimum": 100,
+          "maximum": 2000
+        },
+        "goInline.contextTokens": {
+          "type": "integer",
+          "default": 4000,
+          "minimum": 512,
+          "maximum": 8000,
+          "description": "Approximate input budget; conservatively estimated at three characters per token."
+        },
+        "goInline.supplementaryContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include relevant same-package declarations from workspace files."
+        },
+        "goInline.automatic.maxTokens": {
+          "type": "integer",
+          "default": 128,
+          "minimum": 16,
+          "maximum": 512
+        },
+        "goInline.manual.maxTokens": {
+          "type": "integer",
+          "default": 512,
+          "minimum": 32,
+          "maximum": 2048
+        },
+        "goInline.automatic.timeoutMs": {
+          "type": "integer",
+          "default": 3000,
+          "minimum": 500,
+          "maximum": 30000
+        },
+        "goInline.manual.timeoutMs": {
+          "type": "integer",
+          "default": 15000,
+          "minimum": 1000,
+          "maximum": 60000
+        },
+        "goInline.llamacpp.endpoint": {
+          "default": "http://127.0.0.1:18080",
+          "description": "Local llama-server base URL. Loopback endpoints only. Choose the GGUF model when starting llama-server.",
+          "type": "string",
+          "scope": "application"
+        },
+        "goInline.openrouter.endpoint": {
+          "default": "https://openrouter.ai/api/v1",
+          "scope": "application",
+          "type": "string",
+          "description": "HTTPS OpenRouter Chat Completions base URL."
+        },
+        "goInline.openrouter.model": {
+          "default": "cohere/north-mini-code:free",
+          "type": "string",
+          "description": "Free OpenRouter model ID. Only :free models or openrouter/free are accepted, with zero-price provider routing."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "ignore": "^7.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.95.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^4.1.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}
