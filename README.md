@@ -47,7 +47,7 @@ llama-server -m /path/to/qwen2.5-coder-1.5b-base-q4_k_m.gguf --host 127.0.0.1 --
 
 Leave `goInline.provider` set to `llamacpp`, then run **Go Inline: Check Connection**. The default endpoint is `http://127.0.0.1:18080`. The extension does not download models or install the runtime.
 
-On Windows, the model menu can download the verified 1.5B GGUF, select a model, and start or stop the server. The model is also available directly as a GitHub release asset. [Model menu](local-model/Go-Inline-Model.cmd) · [Setup guide](local-model/README.md) · [Model download](https://github.com/outoftune2000/go-inline/releases/tag/local-model-1.5b)
+On Windows, [local-model/Go-Inline-Model.cmd](local-model/Go-Inline-Model.cmd) provides a load/unload/status menu. Configure it using the [local model controls guide](local-model/README.md). Runtime binaries, weights, logs, and machine-specific paths stay outside Git.
 
 ### OpenRouter: free models
 
@@ -100,4 +100,4 @@ Live model results are model- and hardware-dependent. The historical tests found
 
 Go Inline's project source is licensed under the **GNU General Public License, version 3 only** (`GPL-3.0-only`). See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
-Bundled third-party code retains its own license and attribution. The separately distributed 1.5B model uses Apache 2.0. [Third-party notices](ThirdPartyNotices.txt) · [Model release](https://github.com/outoftune2000/go-inline/releases/tag/local-model-1.5b)
+Bundled third-party code retains its own license and attribution; see [ThirdPartyNotices.txt](ThirdPartyNotices.txt). Model weights, llama.cpp binaries, and hosted services have their own licenses and terms and are not included in this repository.
