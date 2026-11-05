@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('Menu','Start','Stop','Status')][string]$Action = 'Menu',
+  [ValidateSet('Menu','Start','Stop','Status','Download')][string]$Action = 'Menu',
   [string]$ServerPath = '',
   [string]$ModelPath = '',
   [ValidateRange(1024,65535)][int]$Port = 18080,
@@ -15,7 +15,8 @@ if (!$RuntimeDirectory -and (Test-Path -LiteralPath $localConfig)) {
 if (!$RuntimeDirectory) { $RuntimeDirectory = Join-Path $PSScriptRoot '..\work' }
 $workDirectory = [System.IO.Path]::GetFullPath($RuntimeDirectory)
 if (!$ServerPath) { $ServerPath = Join-Path $workDirectory 'llamacpp\llama-server.exe' }
-if (!$ModelPath) { $ModelPath = Join-Path $workDirectory 'models\qwen2.5-coder-1.5b-base-q4_k_m.gguf' }
+$defaultModel = Join-Path $workDirectory 'models\qwen2.5-coder-1.5b-base-q4_k_m.gguf'
+if (!$ModelPath) { $ModelPath = $defaultModel }
 $stateFile = Join-Path $workDirectory 'llama-server-state.json'
 $pidFile = Join-Path $workDirectory 'llama-server.pid'
 
@@ -66,10 +67,34 @@ function Stop-Model {
   Write-Host 'Downloaded model files remain on disk for next time.'
 }
 
+function Get-DefaultModel {
+  $checksum = 'a9ccb6be802412e61e1acbee6287a23b11e56e94718560f910075c64b6194910'
+  if (Test-Path -LiteralPath $defaultModel -PathType Leaf) {
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $defaultModel).Hash -ne $checksum) {
+      throw "Checksum mismatch for $defaultModel. Move that file aside before downloading a fresh copy."
+    }
+    Write-Host "Verified model already available at $defaultModel"
+    return
+  }
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $defaultModel) | Out-Null
+  $partial = "$defaultModel.$([guid]::NewGuid()).partial"
+  $url = 'https://github.com/outoftune2000/go-inline/releases/download/local-model-1.5b/qwen2.5-coder-1.5b-base-q4_k_m.gguf'
+  try {
+    Write-Host 'Downloading Qwen2.5-Coder 1.5B Base Q4_K_M (986 MB)...'
+    curl.exe --fail --location --retry 2 --output $partial $url
+    if ($LASTEXITCODE -ne 0) { throw 'Model download failed. Try again or use the upstream link in local-model/README.md.' }
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $partial).Hash -ne $checksum) { throw 'Downloaded model failed SHA-256 verification.' }
+    [System.IO.File]::Move($partial, $defaultModel)
+    Write-Host "Verified model saved to $defaultModel"
+  } finally {
+    if (Test-Path -LiteralPath $partial -PathType Leaf) { Remove-Item -LiteralPath $partial }
+  }
+}
+
 function Start-Model([string]$SelectedModel) {
   if (Get-OwnedServer) { Write-Host 'A model is already running. Unload it first to switch models.'; Show-ModelStatus; return }
   if (!(Test-Path -LiteralPath $ServerPath -PathType Leaf)) { throw "llama-server not found: $ServerPath" }
-  if (!(Test-Path -LiteralPath $SelectedModel -PathType Leaf)) { throw "Model not found: $SelectedModel" }
+  if (!(Test-Path -LiteralPath $SelectedModel -PathType Leaf)) { throw "Model not found: $SelectedModel. Use menu option 5 to download the 1.5B model." }
   if (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) { throw "Port $Port is used by another service. It has been left alone." }
   $resolvedServer = (Resolve-Path -LiteralPath $ServerPath).Path
   $resolvedModel = (Resolve-Path -LiteralPath $SelectedModel).Path
@@ -93,6 +118,7 @@ switch ($Action) {
   'Start' { Start-Model $ModelPath }
   'Stop' { Stop-Model }
   'Status' { Show-ModelStatus }
+  'Download' { Get-DefaultModel }
   'Menu' {
     while ($true) {
       Write-Host "`nGo Inline - local model control"
@@ -100,6 +126,7 @@ switch ($Action) {
       Write-Host '2. Load 7B model'
       Write-Host '3. Unload model / free GPU memory'
       Write-Host '4. Show status'
+      Write-Host '5. Download and verify the 1.5B model'
       Write-Host '0. Exit menu (keeps current model state)'
       $choice = Read-Host 'Choose'
       try {
@@ -108,8 +135,9 @@ switch ($Action) {
           '2' { Start-Model (Join-Path $workDirectory 'models\qwen2.5-coder-7b-base-q4_k_m.gguf') }
           '3' { Stop-Model }
           '4' { Show-ModelStatus }
+          '5' { Get-DefaultModel }
           '0' { return }
-          default { Write-Host 'Choose 0, 1, 2, 3, or 4.' }
+          default { Write-Host 'Choose 0, 1, 2, 3, 4, or 5.' }
         }
       } catch { Write-Host $_.Exception.Message -ForegroundColor Red }
     }
